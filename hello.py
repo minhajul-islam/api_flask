@@ -8,21 +8,128 @@ app.config.from_pyfile('dbhost.cfg')
 
 mysql.init_app(app)
 
-@app.route('/experiences')
+@app.route('/course')
 def getExperiences():
       connection = mysql.connect()
       cursor = connection.cursor()
-      cursor.execute('''SELECT * FROM Persons''')
+      cursor.execute('''SELECT * FROM course''')
       result = cursor.fetchall()
-      persons = []
+      course = []
       for entry in result:
         record = {
-                  'id': entry[0],
-                  'name': entry[1],
+                  'ID': entry[0],
+                  'title': entry[1],
+                  'details': entry[2],
+                  'rating': entry[3],
+                  'price': entry[4],
             }
-        persons.append(record)		
+        course.append(record)		
 
       return json.dumps(result)
+
+
+
+@app.route('/courseDetails/<ID>')
+def getCourseDetails(ID):
+
+  connection = mysql.connect()
+  cursor = connection.cursor()
+
+  # cursor.execute('''SELECT * FROM course WHERE ID=entr ''')
+  # resultForCourse = cursor.fetchall()
+
+  sql = "SELECT * FROM course_section WHERE project_id = (%s)" % (ID)
+  cursor.execute(sql)
+  resultForSection = cursor.fetchall()
+
+  cursor.execute('''SELECT * FROM content''')
+  resultForContent = cursor.fetchall()
+  
+  # response = {}
+  sections = []
+  course_section = []
+  for entry in resultForSection:
+    contents = [];
+    for entryContent in resultForContent:
+      content = {
+        'id':entryContent[0],
+        'title':entryContent[1],
+        'url': entryContent[2]
+      }
+      if entryContent[6] == entry[0]: 
+        contents.append(content) 
+
+    sections = {
+      'ID': entry[0],
+      'title': entry[1],
+      'lecture': entry[2],
+      'duration': entry[3],
+      'project_id': entry[4],
+      'contents': contents
+    } 
+    course_section.append(sections)
+
+  
+
+
+
+  response = {
+    'status':100,
+    'message':"successfull",
+    'data':{
+      'sections':course_section
+      
+    }
+  }
+
+  return json.dumps(response)
+
+
+      
+@app.route('/section')
+def getSection():
+      connection = mysql.connect()
+      cursor = connection.cursor()
+      cursor.execute('''SELECT * FROM course_section''')
+      result = cursor.fetchall()
+      course_section = []
+      for entry in result:
+        record = {
+                  'ID': entry[0],
+                  'title': entry[1],
+                  'lecture': entry[2],
+                  'duration': entry[3],
+                  'project_id': entry[4],
+            }
+        course_section.append(record)		
+
+      return json.dumps(result)
+
+
+
+
+@app.route('/contentlist')
+def getContent():
+      connection = mysql.connect()
+      cursor = connection.cursor()
+      cursor.execute('''SELECT * FROM content''')
+      result = cursor.fetchall()
+      content = []
+      for entry in result:
+        record = {
+                  'ID': entry[0],
+                  'title': entry[1],
+                  'duration': entry[2],
+                  'url': entry[3],
+                  'notes': entry[4],
+                  'serial': entry[5],
+                  'section_id': entry[6],
+            }
+        content.append(record)		
+
+      return json.dumps(result)
+
+
 
 
 @app.route('/projects',methods=['GET'])
@@ -51,3 +158,4 @@ def getBlogs():
 # . venv/bin/activate
 # export FLASK_APP=hello.py
 # flask run
+# /usr/local/mysql/bin/mysql -u root -p
